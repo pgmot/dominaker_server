@@ -88,11 +88,13 @@ helpers do
     #インクリメント用の変数
     lat = LAT_START
     lng = LNG_START
+    #何メートル四方のグリッドか
+    GRID_SIZE = 3
     grid_id = 0
     default_color = 0
 
-    while lat + LAT_PER1 <= LAT_END do
-      while lng + LNG_PER1 <= LNG_END do
+    while lat + LAT_PER1*GRID_SIZE <= LAT_END do
+      while lng + LNG_PER1*GRID_SIZE <= LNG_END do
         #ラフグリッドの要素を作成（4辺）
         grid = Grid.new(grid_id, lat, lng, lat + LAT_PER1, lng + LNG_PER1, default_color)
         #一辺の長さ分インクリメント
