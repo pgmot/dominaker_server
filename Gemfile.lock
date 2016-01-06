@@ -1,3 +1,10 @@
+GIT
+  remote: git://github.com/eventmachine/eventmachine.git
+  revision: 076a526915dc1eb19bd6d349e7aaf8c92909ef2c
+  branch: master
+  specs:
+    eventmachine (1.0.8)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -6,10 +13,10 @@ GEM
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
-    eventmachine (1.0.8)
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
+    redis (3.2.2)
     sinatra (1.4.6)
       rack (~> 1.4)
       rack-protection (~> 1.4)
@@ -28,6 +35,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  eventmachine!
+  redis
   sinatra
   sinatra-websocket
 

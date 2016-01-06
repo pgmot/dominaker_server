@@ -1,8 +1,19 @@
-require 'sinatra'
-require 'sinatra-websocket'
+require 'bundler'
+Bundler.require
+require 'json'
 
 set :server, 'thin'
 set :sockets, []
+
+post '/register' do
+  puts request.body.read
+  response = {
+    team_id: "test"
+  }
+  response.to_json
+end
+
+
 
 get '/' do
   if !request.websocket?
