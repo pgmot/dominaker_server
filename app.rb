@@ -2,18 +2,15 @@
 require 'bundler'
 Bundler.require
 require 'json'
-
-Grid = Struct.new(:grid_id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :color) 
+require './lib/stage'
 
 TEAM = ["team_T", "team_Y"]
-#1m単位の緯度，経度
-LAT_PER1 = 0.000008983148616
-LNG_PER1 = 0.000010966382364
-#ステージ範囲（始点，終点）
-LAT_START = 34.978691 
+# ステージ範囲（始点，終点）
+LAT_START = 34.978691
 LNG_START = 135.961200
 LAT_END = 34.984252
 LNG_END = 135.965040
+
 set :server, 'thin'
 set :sockets, []
 GRID_SIZE = 3
@@ -23,6 +20,11 @@ if ENV["REDISTOGO_URL"] != nil
   redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
 else
   redis = Redis.new host:"127.0.0.1", port:"6379"
+end
+grids = Array.new
+
+configure do
+  map = Map.new(LAT_START, LNG_START, LAT_END, LNG_END)
 end
 
 post '/register' do
@@ -58,25 +60,28 @@ get '/' do
   else
     request.websocket do |ws|
       ws.onopen do
-        ws.send("Hello World!")
+        ws.send("Game start!")
         settings.sockets << ws
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
+<<<<<<< HEAD
 
+=======
+>>>>>>> Stageクラスにグリッド導入
         #グリッドの初期化(一度のみ初期化するような設計に)
         grids = initialize_grid()
 
         #塗り判定処理
         #グリッドの数分ループ
-        for i in 0..grids-1  
+        for i in 0..grids-1
           #ユーザのループ(each_user_dataの部分は要修正)
-          for j in 0..ユーザのデータ個数-1 
+          for j in 0..ユーザのデータ個数-1
             #四角形衝突判定(グリッドに含まれるか判定)
-            if (grids[i].sw_lat.to_f <= ユーザの座標(lat).to_f && 
+            if (grids[i].sw_lat.to_f <= ユーザの座標(lat).to_f &&
                 grids[i].ne_lat.to_f >= ユーザの座標(lat).to_f &&
                 grids[i].sw_lng.to_f <= ユーザの座標(lng).to_f &&
-                grids[i].ne_lng.to_f >= ユーザの座標(lng).to_f)  
+                grids[i].ne_lng.to_f >= ユーザの座標(lng).to_f)
               # 塗り処理
               grids[i].color = チームのアイディー
               # 各グリッドの値をチームのIDとして更新する
@@ -94,16 +99,9 @@ get '/' do
   end
 end
 
-get '/test' do
-  start = Time.now
-  grids = initialize_grid()
-  puts Time.now - start
-  puts grids[-1]
-  #puts grid
-end
-
 helpers do
 
+<<<<<<< HEAD
   #塗り判定のためのグリッド初期化
   def initialize_grid()
     #グリッドを格納するための配列を初期化
@@ -132,4 +130,7 @@ helpers do
     end
     return grids
   end
-end  
+end
+=======
+end
+>>>>>>> Stageクラスにグリッド導入
