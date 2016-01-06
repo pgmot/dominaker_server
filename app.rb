@@ -29,7 +29,7 @@ post '/register' do
     @team_id = 1
   end
   redis.set req_uuid, @team_id
-  redis.set TEAM[@team_id], nums[@team_id] += 1
+  redis.set TEAM[@team_id], nums[@team_id] + 1
 
   {team_id: @team_id}.to_json
 end
