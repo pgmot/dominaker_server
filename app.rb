@@ -1,8 +1,19 @@
+# -*- coding: utf-8 -*-
 require 'bundler'
 Bundler.require
 require 'json'
 
+Grid = Struct.new(:grid_id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :color) 
+
 TEAM = ["team_T", "team_Y"]
+#1m単位の緯度，経度
+LAT_PER1 = 0.000008983148616
+LNG_PER1 = 0.000010966382364
+#ステージ範囲（始点，終点）
+LAT_START = 34.978691 
+LNG_START = 135.961200
+LAT_END = 34.984252
+LNG_END = 135.965040
 set :server, 'thin'
 set :sockets, []
 redis = Redis.new host:"127.0.0.1", port:"6379"
@@ -44,7 +55,12 @@ get '/' do
         settings.sockets << ws
       end
       ws.onmessage do |msg|
-        EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
+        # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
+        # 塗り処理
+        
+
+        # レスポンス
+        ws.send response
       end
       ws.onclose do
         warn("websocket closed")
@@ -53,3 +69,42 @@ get '/' do
     end
   end
 end
+
+get '/test' do
+  start = Time.now
+  grids = initialize_grid()
+  puts Time.now - start
+  puts grids[-1]
+  #puts grid
+end
+
+helpers do
+
+  #塗り判定のためのグリッド初期化
+  def initialize_grid()
+    #グリッドを格納するための配列を初期化
+    grids = []
+ 
+    #インクリメント用の変数
+    lat = LAT_START
+    lng = LNG_START
+    grid_id = 0
+    default_color = 0
+
+    while lat + LAT_PER1 <= LAT_END do
+      while lng + LNG_PER1 <= LNG_END do
+        #ラフグリッドの要素を作成（4辺）
+        grid = Grid.new(grid_id, lat, lng, lat + LAT_PER1, lng + LNG_PER1, default_color)
+        #一辺の長さ分インクリメント
+        lng += LNG_PER1
+        grid_id += 1
+        grids << grid
+      end
+      #一辺の長さ分インクリメント
+      lat += LAT_PER1
+      #ループのため初期化
+      lng = LNG_START
+    end
+    return grids
+  end
+end  
