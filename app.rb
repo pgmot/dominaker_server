@@ -8,9 +8,15 @@ set :sockets, []
 redis = Redis.new host:"127.0.0.1", port:"6379"
 
 post '/register' do
+  # request = { "uuid": uuid }
   req = JSON.parse(request.body.read).to_hash
   req_uuid = req["uuid"]
-  flag = 0
+
+  # user確認
+  team_id = redis.get req_uuid
+  return {team_id: team_id}.to_json if team_id
+
+  # チーム割り当て
   num_of_Tteam = redis.get TEAM[0]
   num_of_Yteam = redis.get TEAM[1]
   nums = [num_of_Tteam.to_i, num_of_Yteam.to_i]
@@ -22,18 +28,8 @@ post '/register' do
   else
     @team_id = 1
   end
-  users = redis.lrange :users, 0, -1
-  users.each do |user|
-    user = JSON.parse(user).to_hash
-    if req_uuid == user["uuid"]
-      flag = 1
-      @team_id = user["team_id"]
-    end
-  end
-  if flag == 0
-    redis.rpush :users, {uuid: req_uuid, team_id: @team_id}.to_json
-    redis.set TEAM[@team_id], nums[@team_id] += 1
-  end
+  redis.set req_uuid, @team_id
+  redis.set TEAM[@team_id], nums[@team_id] += 1
 
   {team_id: @team_id}.to_json
 end
