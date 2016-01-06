@@ -1,8 +1,38 @@
-require 'sinatra'
-require 'sinatra-websocket'
+require 'bundler'
+Bundler.require
+require 'json'
 
+TEAM = ["team_T", "team_Y"]
 set :server, 'thin'
 set :sockets, []
+redis = Redis.new host:"127.0.0.1", port:"6379"
+
+post '/register' do
+  # request = { "uuid": uuid }
+  req = JSON.parse(request.body.read).to_hash
+  req_uuid = req["uuid"]
+
+  # user確認
+  team_id = redis.get req_uuid
+  return {team_id: team_id}.to_json if team_id
+
+  # チーム割り当て
+  num_of_Tteam = redis.get TEAM[0]
+  num_of_Yteam = redis.get TEAM[1]
+  nums = [num_of_Tteam.to_i, num_of_Yteam.to_i]
+  diff = nums[0] - nums[1]
+  if diff == 0
+    @team_id = [0,1].sample
+  elsif diff < 0
+    @team_id = 0
+  else
+    @team_id = 1
+  end
+  redis.set req_uuid, @team_id
+  redis.set TEAM[@team_id], nums[@team_id] + 1
+
+  {team_id: @team_id}.to_json
+end
 
 get '/' do
   if !request.websocket?
@@ -23,40 +53,3 @@ get '/' do
     end
   end
 end
-
-__END__
-@@ index
-<html>
-  <body>
-     <h1>Simple Echo & Chat Server</h1>
-     <form id="form">
-       <input type="text" id="input" value="send a message"></input>
-     </form>
-     <div id="msgs"></div>
-  </body>
-
-  <script type="text/javascript">
-    window.onload = function(){
-      (function(){
-        var show = function(el){
-          return function(msg){ el.innerHTML = msg + '<br />' + el.innerHTML; }
-        }(document.getElementById('msgs'));
-
-        var ws       = new WebSocket('wss://' + window.location.host + window.location.pathname);
-        ws.onopen    = function()  { show('websocket opened'); };
-        ws.onclose   = function()  { show('websocket closed'); }
-        ws.onmessage = function(m) { show('websocket message: ' +  m.data); };
-
-        var sender = function(f){
-          var input     = document.getElementById('input');
-          input.onclick = function(){ input.value = "" };
-          f.onsubmit    = function(){
-            ws.send(input.value);
-            input.value = "send a message";
-            return false;
-          }
-        }(document.getElementById('form'));
-      })();
-    }
-  </script>
-</html>
