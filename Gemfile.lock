@@ -17,6 +17,8 @@ GEM
     rack-protection (1.5.3)
       rack
     redis (3.2.2)
+    shotgun (0.9.1)
+      rack (>= 1.0)
     sinatra (1.4.6)
       rack (~> 1.4)
       rack-protection (~> 1.4)
@@ -37,6 +39,7 @@ PLATFORMS
 DEPENDENCIES
   eventmachine!
   redis
+  shotgun
   sinatra
   sinatra-websocket
 

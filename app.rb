@@ -2,18 +2,28 @@ require 'bundler'
 Bundler.require
 require 'json'
 
+TEAM = ["team_T", "team_Y"]
 set :server, 'thin'
 set :sockets, []
+redis = Redis.new host:"127.0.0.1", port:"6379"
 
 post '/register' do
-  puts request.body.read
-  response = {
-    team_id: "test"
-  }
+  req = JSON.parse(request.body.read).to_hash
+  req_uuid = req["uuid"]
+  flag = 0
+  puts team_id = [0,1].sample
+  response = {team_id: team_id}
+  users = redis.lrange :users, 0, -1
+  users.each do |user|
+    user = JSON.parse(user).to_hash
+    if req_uuid == user[:uuid]
+      flag = 1
+      response[:team_id] = user[:team_id]
+    end
+  end
+  redis.rpush :users, {uuid: req_uuid, team_id: team_id}.to_json if flag == 0
   response.to_json
 end
-
-
 
 get '/' do
   if !request.websocket?
@@ -34,40 +44,3 @@ get '/' do
     end
   end
 end
-
-__END__
-@@ index
-<html>
-  <body>
-     <h1>Simple Echo & Chat Server</h1>
-     <form id="form">
-       <input type="text" id="input" value="send a message"></input>
-     </form>
-     <div id="msgs"></div>
-  </body>
-
-  <script type="text/javascript">
-    window.onload = function(){
-      (function(){
-        var show = function(el){
-          return function(msg){ el.innerHTML = msg + '<br />' + el.innerHTML; }
-        }(document.getElementById('msgs'));
-
-        var ws       = new WebSocket('wss://' + window.location.host + window.location.pathname);
-        ws.onopen    = function()  { show('websocket opened'); };
-        ws.onclose   = function()  { show('websocket closed'); }
-        ws.onmessage = function(m) { show('websocket message: ' +  m.data); };
-
-        var sender = function(f){
-          var input     = document.getElementById('input');
-          input.onclick = function(){ input.value = "" };
-          f.onsubmit    = function(){
-            ws.send(input.value);
-            input.value = "send a message";
-            return false;
-          }
-        }(document.getElementById('form'));
-      })();
-    }
-  </script>
-</html>
