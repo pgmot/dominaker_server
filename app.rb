@@ -56,9 +56,26 @@ get '/' do
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
-        # 塗り処理
         
-
+        #グリッドの初期化(一度のみ初期化するような設計に)
+        grids = initialize_grid()
+        
+        #塗り判定処理
+        #グリッドの数分ループ
+        for i in 0..grids-1  
+          #ユーザのループ(each_user_dataの部分は要修正)
+          for j in 0..ユーザのデータ個数-1 
+            #四角形衝突判定(グリッドに含まれるか判定)
+            if (grids[i].sw_lat.to_f <= ユーザの座標(lat).to_f && 
+                grids[i].ne_lat.to_f >= ユーザの座標(lat).to_f &&
+                grids[i].sw_lng.to_f <= ユーザの座標(lng).to_f &&
+                grids[i].ne_lng.to_f >= ユーザの座標(lng).to_f)  
+              # 塗り処理
+              grids[i].color = チームのアイディー
+              # 各グリッドの値をチームのIDとして更新する
+            end
+          end
+        end
         # レスポンス
         ws.send response
       end
