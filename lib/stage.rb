@@ -17,7 +17,7 @@ class Stage
 
     #何メートル四方のグリッドか
     grid_id = 0
-    default_color = 0
+    default_color = -1
 
     while lat + LAT_PER1*GRID_SIZE <= lat_end do
       while lng + LNG_PER1*GRID_SIZE <= lng_end do
@@ -35,4 +35,7 @@ class Stage
     end
   end
 
+  def num_of_grids
+    @grids.length
+  end
 end

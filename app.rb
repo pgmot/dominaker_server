@@ -68,38 +68,43 @@ get '/' do
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Stageクラスにグリッド導入
 =======
         # 塗り処理
+=======
+>>>>>>> 塗り判定merge
         ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
         req = JSON.parse(msg).to_hash
+        uuid = req[:uuid]
         lat = req[:lat]
         lng = req[:lng]
+<<<<<<< HEAD
 
 >>>>>>> map => stage
         #グリッドの初期化(一度のみ初期化するような設計に)
         grids = initialize_grid()
 
+=======
+        recovery_flag = req[:recovery_flag]
+        ink_amount = 100
+>>>>>>> 塗り判定merge
         #塗り判定処理
         #グリッドの数分ループ
-        for i in 0..grids-1
-          #ユーザのループ(each_user_dataの部分は要修正)
-          for j in 0..ユーザのデータ個数-1
-            #四角形衝突判定(グリッドに含まれるか判定)
-            if (grids[i].sw_lat.to_f <= ユーザの座標(lat).to_f &&
-                grids[i].ne_lat.to_f >= ユーザの座標(lat).to_f &&
-                grids[i].sw_lng.to_f <= ユーザの座標(lng).to_f &&
-                grids[i].ne_lng.to_f >= ユーザの座標(lng).to_f)
-              # 塗り処理
-              grids[i].color = チームのアイディー
-              # 各グリッドの値をチームのIDとして更新する
-            end
-          end
+        for i in 0..stage.num_of_grids
+          # 塗り処理
+          # チームIDをとりあえず入れる
+          grids[i].color = redis.get uuid if draw?
         end
+
         # レスポンス
-        ws.send response
+        response = {
+          draw_status: stage.grids
+          ink_amount: ink_amount
+        }
+        ws.send response.to_json
       end
       ws.onclose do
         warn("websocket closed")
@@ -110,6 +115,7 @@ get '/' do
 end
 
 helpers do
+<<<<<<< HEAD
 
 <<<<<<< HEAD
   #塗り判定のためのグリッド初期化
@@ -142,5 +148,13 @@ helpers do
   end
 end
 =======
+=======
+  def draw?
+    (stage.grids[i].sw_lat.to_f <= lat.to_f &&
+     stage.grids[i].ne_lat.to_f >= lat.to_f &&
+     stage.grids[i].sw_lng.to_f <= lng.to_f &&
+     stage.grids[i].ne_lng.to_f >= lng.to_f)
+  end
+>>>>>>> 塗り判定merge
 end
 >>>>>>> Stageクラスにグリッド導入
