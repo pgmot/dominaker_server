@@ -22,9 +22,10 @@ else
   redis = Redis.new host:"127.0.0.1", port:"6379"
 end
 grids = Array.new
+stage = nil
 
 configure do
-  map = Map.new(LAT_START, LNG_START, LAT_END, LNG_END)
+  stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
 end
 
 post '/register' do
@@ -66,9 +67,18 @@ get '/' do
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Stageクラスにグリッド導入
+=======
+        # 塗り処理
+        ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
+        req = JSON.parse(msg).to_hash
+        lat = req[:lat]
+        lng = req[:lng]
+
+>>>>>>> map => stage
         #グリッドの初期化(一度のみ初期化するような設計に)
         grids = initialize_grid()
 
