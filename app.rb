@@ -53,7 +53,6 @@ post '/register' do
   redis.set req_uuid, {team_id: @team_id, ink_amount: 100}.to_json
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
-  # response = {"team_id": team_id}
   {team_id: @team_id.to_i}.to_json
 end
 
@@ -81,13 +80,6 @@ get '/' do
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
 
-        # レスポンス
-        # response = {
-        #   draw_status: draw_ids,
-        #   ink_amount: ink_amount,
-        #   recovery_flag: recovery_flag
-        # }
-
         #塗り判定処理
         ## インク残量が10未満なら塗り処理せずにそのままresponse返す
         return { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json if ink_amount < 10
@@ -96,13 +88,15 @@ get '/' do
         for i in 0..stage.num_of_grids
           # 塗り処理
           if draw?(stage.grids[i], lat, lng)
-            stage.grids[i].color = redis.get uuid
+            stage.grids[i].color = team_id
             draw_ids << i
           end
         end
+        ink_amount -= 10
+        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
 
         # response
-        ws.send { draw_status: draw_ids, ink_amount: ink_amount-10, recovery_flag: recovery_flag }.to_json
+        ws.send { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json
       end
       ws.onclose do
         warn("websocket closed")
