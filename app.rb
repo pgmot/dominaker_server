@@ -16,6 +16,7 @@ LAT_END = 34.984252
 LNG_END = 135.965040
 set :server, 'thin'
 set :sockets, []
+GRID_SIZE = 3
 
 if ENV["REDISTOGO_URL"] != nil
   uri = URI.parse(ENV["REDISTOGO_URL"])
@@ -112,7 +113,6 @@ helpers do
     lat = LAT_START
     lng = LNG_START
     #何メートル四方のグリッドか
-    GRID_SIZE = 3
     grid_id = 0
     default_color = 0
 
