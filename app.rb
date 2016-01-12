@@ -88,8 +88,8 @@ get '/' do
 
         # レスポンス
         response = {
-          draw_status: draw_ids
-          ink_amount: ink_amount
+          draw_status: draw_ids,
+          ink_amount: ink_amount,
           recovery_flag: recovery_flag
         }
         ws.send response.to_json
