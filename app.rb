@@ -32,7 +32,7 @@ post '/register' do
 
   # user確認
   team_id = redis.get req_uuid
-  return {team_id: team_id}.to_json if team_id
+  return {team_id: team_id.to_i}.to_json if team_id
 
   # チーム割り当て
   num_of_Tteam = redis.get TEAM[0]
@@ -49,7 +49,7 @@ post '/register' do
   redis.set req_uuid, @team_id
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
-  {team_id: @team_id}.to_json
+  {team_id: @team_id.to_i}.to_json
 end
 
 get '/' do
