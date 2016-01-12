@@ -85,11 +85,11 @@ get '/' do
         return { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json if ink_amount < 10
 
         #グリッドの数分ループ
-        for i in 0..stage.num_of_grids
+        stage.grids.each do |grid|
           # 塗り処理
-          if draw?(stage.grids[i], lat, lng)
-            stage.grids[i].color = team_id
-            draw_ids << i
+          if draw?(grid, lat, lng)
+            grid.color = team_id
+            draw_ids << gird.id
           end
         end
         ink_amount -= 10
