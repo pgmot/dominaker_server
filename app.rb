@@ -71,6 +71,7 @@ get '/' do
         uuid = req[:uuid]
         lat = req[:lat]
         lng = req[:lng]
+        draw_ids = Array.new
 
         recovery_flag = false
         ink_amount = 100
@@ -81,12 +82,13 @@ get '/' do
           # チームIDをとりあえず入れる
           if draw?(stage.grids[i], lat, lng)
             stage.grids[i].color = redis.get uuid
+            draw_ids << i
           end
         end
 
         # レスポンス
         response = {
-          draw_status: stage.grids
+          draw_status: draw_ids
           ink_amount: ink_amount
           recovery_flag: recovery_flag
         }
