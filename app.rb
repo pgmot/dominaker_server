@@ -79,24 +79,22 @@ get '/' do
         user_data = JSON.parse(redis.get(req_uuid))
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
-
         #塗り判定処理
         ## インク残量が10未満なら塗り処理せずにそのままresponse返す
-        return { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json if ink_amount < 10
-
-        #グリッドの数分ループ
-        stage.grids.each do |grid|
-          # 塗り処理
-          if draw?(grid, lat, lng)
-            grid.color = team_id
-            draw_ids << gird.id
+        unless ink_amount < 10
+          #グリッドの数分ループ
+          stage.grids.each do |grid|
+            # 塗り処理
+            if draw?(grid, lat, lng)
+              grid.color = team_id
+              draw_ids << gird.id
+            end
           end
+          ink_amount -= 10
+          redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
         end
-        ink_amount -= 10
-        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
-
         # response
-        ws.send { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json
+        ws.send({draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag}.to_json)
       end
       ws.onclose do
         warn("websocket closed")
