@@ -5,7 +5,7 @@ class Stage
 
   # gridのサイズ(メートル
   GRID_SIZE = 3
-  Grid = Struct.new(:grid_id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :color)
+  Grid = Struct.new(:id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :color)
 
   #塗り判定のためのグリッド初期化
   def initialize(lat_start, lng_start, lat_end, lng_end)
