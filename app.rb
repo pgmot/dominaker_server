@@ -32,9 +32,11 @@ post '/register' do
   req = JSON.parse(request.body.read).to_hash
   req_uuid = req["uuid"]
 
-  # user確認
-  team_id = redis.get req_uuid
-  return {team_id: team_id.to_i}.to_json if team_id
+  # user 確認
+  if user = redis.get(req_uuid)
+    team_id = JSON.parse(user)["team_id"]
+    return {team_id: team_id.to_i}.to_json
+  end
 
   # チーム割り当て
   num_of_Tteam = redis.get TEAM[0]
@@ -48,9 +50,10 @@ post '/register' do
   else
     @team_id = 1
   end
-  redis.set req_uuid, @team_id
+  redis.set req_uuid, {team_id: @team_id, ink_amount: 100}.to_json
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
+  # response = {"team_id": team_id}
   {team_id: @team_id.to_i}.to_json
 end
 
@@ -74,25 +77,32 @@ get '/' do
         draw_ids = Array.new
 
         recovery_flag = false
-        ink_amount = 100
+        user_data = JSON.parse(redis.get(req_uuid))
+        team_id = user_data["team_id"].to_i
+        ink_amount = user_data["ink_amount"].to_i
+
+        # レスポンス
+        # response = {
+        #   draw_status: draw_ids,
+        #   ink_amount: ink_amount,
+        #   recovery_flag: recovery_flag
+        # }
+
         #塗り判定処理
+        ## インク残量が10未満なら塗り処理せずにそのままresponse返す
+        return { draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag }.to_json if ink_amount < 10
+
         #グリッドの数分ループ
         for i in 0..stage.num_of_grids
           # 塗り処理
-          # チームIDをとりあえず入れる
           if draw?(stage.grids[i], lat, lng)
             stage.grids[i].color = redis.get uuid
             draw_ids << i
           end
         end
 
-        # レスポンス
-        response = {
-          draw_status: draw_ids,
-          ink_amount: ink_amount,
-          recovery_flag: recovery_flag
-        }
-        ws.send response.to_json
+        # response
+        ws.send { draw_status: draw_ids, ink_amount: ink_amount-10, recovery_flag: recovery_flag }.to_json
       end
       ws.onclose do
         warn("websocket closed")
