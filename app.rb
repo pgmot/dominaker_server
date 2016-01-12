@@ -13,7 +13,6 @@ LNG_END = 135.965040
 
 set :server, 'thin'
 set :sockets, []
-GRID_SIZE = 3
 
 if ENV["REDISTOGO_URL"] != nil
   uri = URI.parse(ENV["REDISTOGO_URL"])
@@ -61,48 +60,35 @@ get '/' do
   else
     request.websocket do |ws|
       ws.onopen do
-        ws.send("Game start!")
+        ws.send("Open")
         settings.sockets << ws
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> Stageクラスにグリッド導入
-=======
         # 塗り処理
-=======
->>>>>>> 塗り判定merge
         ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
         req = JSON.parse(msg).to_hash
         uuid = req[:uuid]
         lat = req[:lat]
         lng = req[:lng]
-<<<<<<< HEAD
 
->>>>>>> map => stage
-        #グリッドの初期化(一度のみ初期化するような設計に)
-        grids = initialize_grid()
-
-=======
-        recovery_flag = req[:recovery_flag]
+        recovery_flag = false
         ink_amount = 100
->>>>>>> 塗り判定merge
         #塗り判定処理
         #グリッドの数分ループ
         for i in 0..stage.num_of_grids
           # 塗り処理
           # チームIDをとりあえず入れる
-          grids[i].color = redis.get uuid if draw?
+          if draw?(stage.grids[i], lat, lng)
+            stage.grids[i].color = redis.get uuid
+          end
         end
 
         # レスポンス
         response = {
           draw_status: stage.grids
           ink_amount: ink_amount
+          recovery_flag: recovery_flag
         }
         ws.send response.to_json
       end
@@ -115,46 +101,10 @@ get '/' do
 end
 
 helpers do
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-  #塗り判定のためのグリッド初期化
-  def initialize_grid()
-    #グリッドを格納するための配列を初期化
-    grids = []
-
-    #インクリメント用の変数
-    lat = LAT_START
-    lng = LNG_START
-    #何メートル四方のグリッドか
-    grid_id = 0
-    default_color = 0
-
-    while lat + LAT_PER1*GRID_SIZE <= LAT_END do
-      while lng + LNG_PER1*GRID_SIZE <= LNG_END do
-        #ラフグリッドの要素を作成（4辺）
-        grid = Grid.new(grid_id, lat, lng, lat + LAT_PER1, lng + LNG_PER1, default_color)
-        #一辺の長さ分インクリメント
-        lng += LNG_PER1
-        grid_id += 1
-        grids << grid
-      end
-      #一辺の長さ分インクリメント
-      lat += LAT_PER1
-      #ループのため初期化
-      lng = LNG_START
-    end
-    return grids
+  def draw?(grid, lat, lng)
+    (grid.sw_lat.to_f <= lat.to_f &&
+     grid.ne_lat.to_f >= lat.to_f &&
+     grid.sw_lng.to_f <= lng.to_f &&
+     grid.ne_lng.to_f >= lng.to_f)
   end
 end
-=======
-=======
-  def draw?
-    (stage.grids[i].sw_lat.to_f <= lat.to_f &&
-     stage.grids[i].ne_lat.to_f >= lat.to_f &&
-     stage.grids[i].sw_lng.to_f <= lng.to_f &&
-     stage.grids[i].ne_lng.to_f >= lng.to_f)
-  end
->>>>>>> 塗り判定merge
-end
->>>>>>> Stageクラスにグリッド導入
