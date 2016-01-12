@@ -16,7 +16,13 @@ LAT_END = 34.984252
 LNG_END = 135.965040
 set :server, 'thin'
 set :sockets, []
-redis = Redis.new host:"127.0.0.1", port:"6379"
+
+if ENV["REDISTOGO_URL"] != nil
+  uri = URI.parse(ENV["REDISTOGO_URL"])
+  redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+else
+  redis = Redis.new host:"127.0.0.1", port:"6379"
+end
 
 post '/register' do
   # request = { "uuid": uuid }
@@ -56,10 +62,10 @@ get '/' do
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
-        
+
         #グリッドの初期化(一度のみ初期化するような設計に)
         grids = initialize_grid()
-        
+
         #塗り判定処理
         #グリッドの数分ループ
         for i in 0..grids-1  
@@ -101,7 +107,7 @@ helpers do
   def initialize_grid()
     #グリッドを格納するための配列を初期化
     grids = []
- 
+
     #インクリメント用の変数
     lat = LAT_START
     lng = LNG_START
