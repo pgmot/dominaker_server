@@ -90,7 +90,8 @@ get '/' do
               draw_ids << gird.id
             end
           end
-          ink_amount -= 10
+          # 一回の塗りで5減らす
+          ink_amount -= 5
           redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
         end
         # response
