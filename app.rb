@@ -50,7 +50,7 @@ post '/register' do
   else
     @team_id = 1
   end
-  redis.set req_uuid, {team_id: @team_id, ink_amount: 100, last_recovery_status: false, :last_update Time.now.to_f}.to_json
+  redis.set req_uuid, {team_id: @team_id, ink_amount: 100, last_recovery_status: false, last_update: Time.now.to_f}.to_json
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
   {team_id: @team_id.to_i}.to_json
@@ -105,7 +105,7 @@ get '/' do
           ink_amount -= 10
         end
         # redisの情報更新
-        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount.to_i, :last_update now.to_f}.to_json
+        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount.to_i, last_update: now.to_f}.to_json
 
         # response
         ws.send({draw_status: draw_ids, ink_amount: ink_amount.to_i, recovery_flag: recovery_flag}.to_json)
