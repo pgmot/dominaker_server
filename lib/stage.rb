@@ -6,6 +6,11 @@ class Stage
   # gridのサイズ(メートル
   GRID_SIZE = 3
   Grid = Struct.new(:id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :color)
+  RecoveryArea = Struct.new(:sw_lat, :sw_lng, :ne_lat, :ne_lng)
+
+  # 回復位置のリスト
+  ## [フォレスト，コラーニング，CC，ユニオン，リンク]
+  BKCRecoveryAreas = [RecoveryArea.new(34.980499, 135.963740, 34.980851, 135.964628), RecoveryArea.new(34.979856, 135.962096, 34.980242, 135.963361), RecoveryArea.new(34.979412, 135.963715, 34.979715, 135.964849), RecoveryArea.new(34.981814, 135.962363, 34.982399, 135.963077), RecoveryArea.new(34.979919, 135.963727, 34.980339, 135.964389)]
 
   #塗り判定のためのグリッド初期化
   def initialize(lat_start, lng_start, lat_end, lng_end)
@@ -33,6 +38,11 @@ class Stage
       #ループのため初期化
       lng = lng_start
     end
+  end
+
+  # ステージ増やすならステージID投げてもらってそれに伴い回復エリアを返す感じで
+  def recovery_areas
+    BKCRecoveryAreas
   end
 
   def num_of_grids

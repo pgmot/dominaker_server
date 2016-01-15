@@ -50,7 +50,7 @@ post '/register' do
   else
     @team_id = 1
   end
-  redis.set req_uuid, {team_id: @team_id, ink_amount: 100}.to_json
+  redis.set req_uuid, {team_id: @team_id, ink_amount: 100, last_recovery_status: false, last_update: Time.now.to_f}.to_json
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
   {team_id: @team_id.to_i}.to_json
@@ -67,19 +67,30 @@ get '/' do
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
-        # 塗り処理
-        ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
+        # requestのパース
         req = JSON.parse(msg).to_hash
         uuid = req[:uuid]
-        lat = req[:lat]
-        lng = req[:lng]
-        draw_ids = Array.new
+        lat = req[:lat].to_f
+        lng = req[:lng].to_f
 
-        recovery_flag = false
+        # redisからuuid使ってデータ抜き出し
         user_data = JSON.parse(redis.get(req_uuid))
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
-        #塗り判定処理
+        last_update = Time.at(user_data["last_update"].to_f)
+
+        recovery_flag = recovery?(stage.recovery_areas, lat, lng)
+        draw_ids = Array.new
+        now = Time.now
+
+        # インク回復処理
+        if recovery_flag
+          times = now - last_update if user_data["last_recovery_status"]
+          times ||= 1
+          ink_amount += 5*times
+        end
+
+        # 塗り判定処理
         ## インク残量が10未満なら塗り処理せずにそのままresponse返す
         unless ink_amount < 10
           #グリッドの数分ループ
@@ -87,14 +98,17 @@ get '/' do
             # 塗り処理
             if draw?(grid, lat, lng)
               grid.color = team_id
-              draw_ids << gird.id
+              draw_ids << grid.id
             end
           end
+          # 一回の塗りで10減らす
           ink_amount -= 10
-          redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
         end
+        # redisの情報更新
+        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount.to_i, last_update: now.to_f}.to_json
+
         # response
-        ws.send({draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag}.to_json)
+        ws.send({draw_status: draw_ids, ink_amount: ink_amount.to_i, recovery_flag: recovery_flag}.to_json)
       end
       ws.onclose do
         warn("websocket closed")
@@ -106,9 +120,17 @@ end
 
 helpers do
   def draw?(grid, lat, lng)
-    (grid.sw_lat.to_f <= lat.to_f &&
-     grid.ne_lat.to_f >= lat.to_f &&
-     grid.sw_lng.to_f <= lng.to_f &&
+    (grid.sw_lat.to_f <= lat.to_f and
+     grid.ne_lat.to_f >= lat.to_f and
+     grid.sw_lng.to_f <= lng.to_f and
      grid.ne_lng.to_f >= lng.to_f)
   end
+
+  def recovery?(recovery_areas, lat, lng)
+    recovery_areas.each do |area|
+      return true if (area.sw_lat <= lat.to_f and area.ne_lat >= lat.to_f and area.sw_lng <= lng.to_f and area.ne_lng >= lng.to_f)
+    end
+    false
+  end
+
 end
