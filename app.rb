@@ -50,7 +50,7 @@ post '/register' do
   else
     @team_id = 1
   end
-  redis.set req_uuid, {team_id: @team_id, ink_amount: 100}.to_json
+  redis.set req_uuid, {team_id: @team_id, ink_amount: 100, last_recovery_status: false, :last_update Time.now.to_f}.to_json
   redis.set TEAM[@team_id], nums[@team_id] + 1
 
   {team_id: @team_id.to_i}.to_json
@@ -67,22 +67,28 @@ get '/' do
       end
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
-        # 塗り処理
-        ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
+        # requestのパース
         req = JSON.parse(msg).to_hash
         uuid = req[:uuid]
         lat = req[:lat].to_f
         lng = req[:lng].to_f
-        draw_ids = Array.new
 
+        # redisからuuid使ってデータ抜き出し
         user_data = JSON.parse(redis.get(req_uuid))
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
+        last_update = Time.at(user_data["last_update"].to_f)
+
         recovery_flag = recovery?(stage.recovery_areas, lat, lng)
+        draw_ids = Array.new
+        now = Time.now
 
         # インク回復処理
-        ## そのうち，場所ごとに回復しやすい場所とか作っても面白いかも
-        ink_amount += 5 if recovery_flag
+        if recovery_flag
+          times = now - last_update if user_data["last_recovery_status"]
+          times ||= 1
+          ink_amount += 5*times
+        end
 
         # 塗り判定処理
         ## インク残量が10未満なら塗り処理せずにそのままresponse返す
@@ -95,12 +101,14 @@ get '/' do
               draw_ids << grid.id
             end
           end
-          # 一回の塗りで5減らす
-          ink_amount -= 5
-          redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount}.to_json
+          # 一回の塗りで10減らす
+          ink_amount -= 10
         end
+        # redisの情報更新
+        redis.set req_uuid, {team_id: team_id, ink_amount: ink_amount.to_i, :last_update now.to_f}.to_json
+
         # response
-        ws.send({draw_status: draw_ids, ink_amount: ink_amount, recovery_flag: recovery_flag}.to_json)
+        ws.send({draw_status: draw_ids, ink_amount: ink_amount.to_i, recovery_flag: recovery_flag}.to_json)
       end
       ws.onclose do
         warn("websocket closed")
