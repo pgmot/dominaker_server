@@ -40,6 +40,11 @@ class Stage
     end
   end
 
+  # ステージ増やすならステージID投げてもらってそれに伴い回復エリアを返す感じで
+  def recovery_areas
+    BKCRecoveryAreas
+  end
+
   def num_of_grids
     @grids.length
   end

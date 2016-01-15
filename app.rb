@@ -71,15 +71,20 @@ get '/' do
         ## latとlng来るはずだからそれを元に位置特定してgridのID渡す？
         req = JSON.parse(msg).to_hash
         uuid = req[:uuid]
-        lat = req[:lat]
-        lng = req[:lng]
+        lat = req[:lat].to_f
+        lng = req[:lng].to_f
         draw_ids = Array.new
 
-        recovery_flag = false
         user_data = JSON.parse(redis.get(req_uuid))
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
-        #塗り判定処理
+        recovery_flag = recovery?(stage.recovery_areas, lat, lng)
+
+        # インク回復処理
+        ## そのうち，場所ごとに回復しやすい場所とか作っても面白いかも
+        ink_amount += 5 if recovery_flag
+
+        # 塗り判定処理
         ## インク残量が10未満なら塗り処理せずにそのままresponse返す
         unless ink_amount < 10
           #グリッドの数分ループ
@@ -87,7 +92,7 @@ get '/' do
             # 塗り処理
             if draw?(grid, lat, lng)
               grid.color = team_id
-              draw_ids << gird.id
+              draw_ids << grid.id
             end
           end
           # 一回の塗りで5減らす
@@ -107,9 +112,17 @@ end
 
 helpers do
   def draw?(grid, lat, lng)
-    (grid.sw_lat.to_f <= lat.to_f &&
-     grid.ne_lat.to_f >= lat.to_f &&
-     grid.sw_lng.to_f <= lng.to_f &&
+    (grid.sw_lat.to_f <= lat.to_f and
+     grid.ne_lat.to_f >= lat.to_f and
+     grid.sw_lng.to_f <= lng.to_f and
      grid.ne_lng.to_f >= lng.to_f)
   end
+
+  def recovery?(recovery_areas, lat, lng)
+    recovery_areas.each do |area|
+      return true if (area.sw_lat <= lat.to_f and area.ne_lat >= lat.to_f and area.sw_lng <= lng.to_f and area.ne_lng >= lng.to_f)
+    end
+    false
+  end
+
 end
