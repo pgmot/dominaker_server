@@ -20,11 +20,23 @@ if ENV["REDISTOGO_URL"] != nil
 else
   redis = Redis.new host:"127.0.0.1", port:"6379"
 end
-grids = Array.new
 stage = nil
+scheduler = Rufus::Scheduler.new
 
 configure do
   stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
+end
+
+# ゲームスタート前にマップリセット
+scheduler.cron '0 9 * * *' do
+  stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
+end
+
+# 21時に勝敗判定して，その後にredisリセット
+scheduler.cron '0 21 * * *' do
+  result = stage.victory_or_defeat
+  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids}"
+  puts "#{TEAM[1]}:#{result[1] / stage.num_of_grids}"
 end
 
 post '/register' do

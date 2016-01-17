@@ -17,6 +17,7 @@ GEM
     rack-protection (1.5.3)
       rack
     redis (3.2.2)
+    rufus-scheduler (3.2.0)
     shotgun (0.9.1)
       rack (>= 1.0)
     sinatra (1.4.6)
@@ -39,6 +40,7 @@ PLATFORMS
 DEPENDENCIES
   eventmachine!
   redis
+  rufus-scheduler
   shotgun
   sinatra
   sinatra-websocket
