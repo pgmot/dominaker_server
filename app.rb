@@ -37,11 +37,11 @@ end
 
 # 20秒毎に状況表示
 ## この機能使って定期的にクライアント側の更新かけてもらうのもありかもしれん
-scheduler.every '20s' do
-  result = stage.draw_rate
-  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
-  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
-end
+#scheduler.every '20s' do
+#  result = stage.draw_rate
+#  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
+#  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
+#end
 
 # 21時に勝敗判定して，その後にredisリセット
 scheduler.cron '0 21 * * *' do
