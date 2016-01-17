@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'bundler'
 Bundler.require
 require 'json'
@@ -13,6 +12,8 @@ LNG_END = 135.965040
 
 set :server, 'thin'
 set :sockets, []
+set :result, []
+set :stage, nil
 
 if ENV["REDISTOGO_URL"] != nil
   uri = URI.parse(ENV["REDISTOGO_URL"])
@@ -20,12 +21,47 @@ if ENV["REDISTOGO_URL"] != nil
 else
   redis = Redis.new host:"127.0.0.1", port:"6379"
 end
-grids = Array.new
 stage = nil
+scheduler = Rufus::Scheduler.new
 
 configure do
   stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
 end
+
+# ゲームスタート前にマップリセット
+scheduler.cron '0 9 * * *' do
+  stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
+  settings.result = []
+  settings.stage = nil
+end
+
+# 20秒毎に状況表示
+## この機能使って定期的にクライアント側の更新かけてもらうのもありかもしれん
+scheduler.every '20s' do
+  result = stage.draw_rate
+  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
+  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
+end
+
+# 21時に勝敗判定して，その後にredisリセット
+scheduler.cron '0 21 * * *' do
+  result = stage.draw_rate
+  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
+  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
+  # なんかあった時のために一旦setに置く（その必要はなさそうだが）
+  settings.result = result
+  settings.stage = stage
+
+  # redis全消去
+  redis.keys.each do |key|
+    redis.del key
+  end
+
+  # team_id毎に結果を保存
+  redis.set 0, result[0] / stage.num_of_grids * 100
+  redis.set 1, result[1] / stage.num_of_grids * 100
+end
+
 
 post '/register' do
   # request = { "uuid": uuid }
@@ -62,7 +98,7 @@ get '/' do
   else
     request.websocket do |ws|
       ws.onopen do
-        ws.send("Open")
+        #ws.send("Open")
         settings.sockets << ws
       end
       ws.onmessage do |msg|
@@ -81,7 +117,14 @@ get '/' do
 
         recovery_flag = recovery?(stage.recovery_areas, lat, lng)
         draw_ids = Array.new
+
+        # 全員対戦モードに参加している場合は9時から21時まで（時間は適宜変更します）
+        # 平日判定があってもいいかも
         now = Time.now
+        if now.hour <= 21 and now.hour > 9
+          ws.send("not battle now")
+          break
+        end
 
         # インク回復処理
         if recovery_flag
