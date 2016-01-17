@@ -13,10 +13,13 @@ GEM
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
+    haml (4.0.7)
+      tilt
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
     redis (3.2.2)
+    sass (3.4.21)
     shotgun (0.9.1)
       rack (>= 1.0)
     sinatra (1.4.6)
@@ -38,7 +41,9 @@ PLATFORMS
 
 DEPENDENCIES
   eventmachine!
+  haml
   redis
+  sass
   shotgun
   sinatra
   sinatra-websocket
