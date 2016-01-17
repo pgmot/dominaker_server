@@ -62,7 +62,7 @@ get '/' do
   else
     request.websocket do |ws|
       ws.onopen do
-        ws.send("Open")
+        #ws.send("Open")
         settings.sockets << ws
       end
       ws.onmessage do |msg|
@@ -81,7 +81,14 @@ get '/' do
 
         recovery_flag = recovery?(stage.recovery_areas, lat, lng)
         draw_ids = Array.new
+
+        # 全員対戦モードに参加している場合は9時から21時まで（時間は適宜変更します）
+        # 平日判定があってもいいかも
         now = Time.now
+        if now.hour <= 21 and now.hour > 9
+          ws.send("not battle now")
+          break
+        end
 
         # インク回復処理
         if recovery_flag
