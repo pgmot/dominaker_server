@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'bundler'
 Bundler.require
 require 'json'
@@ -13,6 +12,8 @@ LNG_END = 135.965040
 
 set :server, 'thin'
 set :sockets, []
+set :result, []
+set :stage, nil
 
 if ENV["REDISTOGO_URL"] != nil
   uri = URI.parse(ENV["REDISTOGO_URL"])
@@ -30,14 +31,37 @@ end
 # ゲームスタート前にマップリセット
 scheduler.cron '0 9 * * *' do
   stage = Stage.new(LAT_START, LNG_START, LAT_END, LNG_END)
+  settings.result = []
+  settings.stage = nil
+end
+
+# 20秒毎に状況表示
+## この機能使って定期的にクライアント側の更新かけてもらうのもありかもしれん
+scheduler.every '20s' do
+  result = stage.draw_rate
+  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
+  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
 end
 
 # 21時に勝敗判定して，その後にredisリセット
 scheduler.cron '0 21 * * *' do
-  result = stage.victory_or_defeat
-  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids}"
-  puts "#{TEAM[1]}:#{result[1] / stage.num_of_grids}"
+  result = stage.draw_rate
+  puts "#{TEAM[0]}:#{result[0] / stage.num_of_grids * 100}%"
+  puts "#{TEAM[1]}:#{result[0] / stage.num_of_grids * 100}%"
+  # なんかあった時のために一旦setに置く（その必要はなさそうだが）
+  settings.result = result
+  settings.stage = stage
+
+  # redis全消去
+  redis.keys.each do |key|
+    redis.del key
+  end
+
+  # team_id毎に結果を保存
+  redis.set 0, result[0] / stage.num_of_grids * 100
+  redis.set 1, result[1] / stage.num_of_grids * 100
 end
+
 
 post '/register' do
   # request = { "uuid": uuid }

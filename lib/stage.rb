@@ -45,7 +45,7 @@ class Stage
     BKCRecoveryAreas
   end
 
-  def victory_or_defeat
+  def draw_rate
     result = [0,0]
     @grids.each do |grid|
       result[grid.color] += 1 unless grid.color == -1
