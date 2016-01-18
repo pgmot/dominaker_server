@@ -1,4 +1,5 @@
 class Stage
+  attr_reader :grids
   # 1m単位の緯度，経度
   LAT_PER1 = 0.000008983148616
   LNG_PER1 = 0.000010966382364
@@ -27,7 +28,7 @@ class Stage
     while lat + LAT_PER1*GRID_SIZE <= lat_end do
       while lng + LNG_PER1*GRID_SIZE <= lng_end do
         #ラフグリッドの要素を作成（4辺）
-        grid = Grid.new(grid_id, lat, lng, lat + LAT_PER1, lng + LNG_PER1, default_color)
+        grid = Grid.new(grid_id, lat, lng, lat + LAT_PER1*GRID_SIZE, lng + LNG_PER1*GRID_SIZE, default_color)
         #一辺の長さ分インクリメント
         lng += LNG_PER1*GRID_SIZE
         grid_id += 1
