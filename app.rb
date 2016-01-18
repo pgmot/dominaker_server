@@ -15,6 +15,8 @@ set :sockets, []
 set :result, []
 set :stage, nil
 
+ws_msg_type = ["status"]
+
 if ENV["REDISTOGO_URL"] != nil
   uri = URI.parse(ENV["REDISTOGO_URL"])
   redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
@@ -110,7 +112,7 @@ get '/' do
         lng = req[:lng].to_f
 
         # redisからuuid使ってデータ抜き出し
-        user_data = JSON.parse(redis.get(req_uuid))
+        user_data = JSON.parse(redis.get(uuid))
         team_id = user_data["team_id"].to_i
         ink_amount = user_data["ink_amount"].to_i
         last_update = Time.at(user_data["last_update"].to_f)
