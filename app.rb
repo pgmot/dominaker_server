@@ -93,6 +93,10 @@ post '/register' do
   {team_id: @team_id.to_i}.to_json
 end
 
+get '/recovery_area' do
+  stage.recovery_areas.map{ |area| {:sw_lat => area.sw_lat, :ne_lat => area.ne_lat, :sw_lng => area.sw_lng, :ne_lng => area.ne_lng} }.to_json
+end
+
 get '/map' do
   stage.grids.reject{|grid| grid.color == -1}.map{|grid| {:id => grid.id, :team_id => grid.color}}.to_json
 end
