@@ -102,7 +102,6 @@ get '/map' do
 end
 
 get '/' do
-  puts "num of grid #{stage.grids.length}"
   if !request.websocket?
     erb :index
   else
@@ -114,7 +113,7 @@ get '/' do
       ws.onmessage do |msg|
         # EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
         # requestのパース
-        p req = JSON.parse(msg)
+        req = JSON.parse(msg)
         uuid = req["uuid"]
         lat = req["lat"].to_f
         lng = req["lng"].to_f
@@ -137,23 +136,22 @@ get '/' do
         end
 
         # インク回復処理
-        if recovery_flag
+        if recovery_flag and ink_amount < 100
           times = now - last_update if user_data["last_recovery_status"]
           times ||= 1
-          ink_amount += 10*times
+          ink_amount += 5*times
+          ink_amount = 100 if ink_amount > 100
+          end
         end
 
         # 塗り判定処理
-        ## インク残量が10未満なら塗り処理せずにそのままresponse返す
-        #puts "num of grid #{stage.num_of_grids}"
+        ## インク残量が10未満なら塗り処理しない
         if ink_amount >= 10 && draw_flag
-          #puts "#{lat}, #{lng}"
           #グリッドの数分ループ
           stage.grids.each do |grid|
             #puts grid
             # 塗り処理
             if draw?(grid, lat, lng)
-              puts "#{grid}: #{lat}, #{lng}"
               grid.color = team_id
               draw_ids << grid.id
             end
