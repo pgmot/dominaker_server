@@ -141,7 +141,6 @@ get '/' do
           times ||= 1
           ink_amount += 5*times
           ink_amount = 100 if ink_amount > 100
-          end
         end
 
         # 塗り判定処理
